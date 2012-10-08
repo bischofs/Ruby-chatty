@@ -16,8 +16,6 @@ class ChatServer
   
   
   def run  
-    
-    
 
     while true # main run loop 
 
@@ -55,41 +53,50 @@ class ChatServer
               temp = @clientlist[i]
               
               if line == temp.getHandle
-                chat_session(clientsock,temp.getSock)
+
+                chat_session(client,temp)
+
               end
               
             end
-                              
+            
+          end
+          
         end
-                  
+        
       end
-
-    end
     
+    end
+  
   end#run
-
-
+  
+    
   private
-  
-  
-  def new_connection
-  end
   
   def chat_session( client1,client2 ) #client 1 is intiating 
     
+    clientsock1 = client1.getSock
+    clientsock2 = client2.getSock
     
-    
+    clientsock2.puts("Entering chat session with #{client1.getHandle}") 
 
+    while clientsock1.gets.chomp != "quit" || clientsock2.gets.chomp != "quit" 
+      
+      clientsock2.puts(clientsock1.gets.chomp)
+      clientsock1.puts(clientsock2.gets.chomp)
+      
+    end
+    
     
   end
   
-  def broadcast_str
+  def broadcast # broadcast to all clients
     
-#    @clientlist.each_with_index do |n,i| 
-      
-      
- #   end
-
+    #    @clientlist.each_with_index do |n,i| 
+    
+    
+    #   end
+    
   end
   
 
@@ -126,7 +133,7 @@ end
 
 def main
   
-  serv = ChatServer.new(1233).run #init and run
+  serv = ChatServer.new(1233).run #init and run with 1233 as port
   
 end 
 main
