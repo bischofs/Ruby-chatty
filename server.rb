@@ -31,6 +31,8 @@ class ChatServer
         
         while line = clientsock.gets.chomp 
           
+          
+      
           if line == "list"
             
             @clientlist.each_with_index do |n,i| 
@@ -51,8 +53,14 @@ class ChatServer
             @clientlist.each_with_index do |n,i| 
               
               temp = @clientlist[i]
+          
+              
+              
               
               if line == temp.getHandle
+
+                temp.setChatFlag
+                
 
                 chat_session(client,temp)
 
@@ -61,6 +69,9 @@ class ChatServer
             end
             
           end
+
+
+#somewhere close the worker socket
           
         end
         
@@ -108,6 +119,13 @@ class Client
     
     @sock = sock 
     @handle = handle 
+    @chatflag = 0
+ 
+  end
+
+  def newChat(socket)
+    
+    
 
   end
 
@@ -116,6 +134,12 @@ class Client
     return @handle
 
   end
+
+  def setChatFlag()
+    @chatflag = 1
+    
+  end
+
   
   def getSock()
 
