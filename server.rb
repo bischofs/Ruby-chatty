@@ -29,77 +29,88 @@ class ChatServer
         client = Client.new(handle,clientsock)
         @clientlist.push(client)
         
-        while line = clientsock.gets.chomp 
+        clientsock.puts("...Handle recieved")
+        
+        while line = clientsock.gets.chomp # get from the current client
           
           
-      
-          if line == "list"
+          if client.getChatFlag == 0
             
-            @clientlist.each_with_index do |n,i| 
-              
-              temp =  @clientlist[i]
-              
-              clientsock.puts temp.getHandle 
-              clientsock.puts temp.getSockAddr
-              
-            end
-          
-          elsif line == "quit"
             
-            break;
-          
-          else
-
-            @clientlist.each_with_index do |n,i| 
+            if line == "$list"
               
-              temp = @clientlist[i]
-          
-              
-              
-              
-              if line == temp.getHandle
-
-                temp.setChatFlag
+              @clientlist.each_with_index do |n,i| 
                 
+                temp =  @clientlist[i]
+                
+                clientsock.puts temp.getHandle 
+                clientsock.puts temp.getSockAddr
+                
+              end #end each loop
+                  
+            elsif line == "$quit"
+              
+              break;
+              
+            else
+              
+              @clientlist.each_with_index do |n,i| 
+                
+                temp = @clientlist[i]
+                
+                if line == temp.getHandle 
 
-                chat_session(client,temp)
+                  clientsock.puts("Entered chat with #{client.getHandle}")
+                  
+                  client.setChatPart(temp.getSock)
+                  temp.setChatPart(client.getSock)
 
-              end
+                  clientsock.puts("1")
+
+                  temp.setChatFlag
+                  client.setChatFlag
+                  
+                  clientsock.puts("2")
+
+                end
+              end #end each loop
               
             end
             
+            
+          else#in chat session
+            
+            clientsock.puts("3")
+
+            chatsock = client.getChatPart
+            
+            clientsock.puts("4")
+            
+            chatsock.puts("#{line}")
+            
+            clientsock.puts("5")
           end
-
-
-#somewhere close the worker socket
+          
+          #somewhere close the worker socket
           
         end
         
       end
-    
+      
     end
-  
+    
   end#run
   
-    
+  
   private
   
   def chat_session( client1,client2 ) #client 1 is intiating 
     
-    clientsock1 = client1.getSock
-    clientsock2 = client2.getSock
-    
-    clientsock2.puts("Entering chat session with #{client1.getHandle}") 
-
-    while clientsock1.gets.chomp != "quit" || clientsock2.gets.chomp != "quit" 
-      
-      clientsock2.puts(clientsock1.gets.chomp)
-      clientsock1.puts(clientsock2.gets.chomp)
-      
-    end
-    
     
   end
+  
+  
+
   
   def broadcast # broadcast to all clients
     
@@ -120,15 +131,19 @@ class Client
     @sock = sock 
     @handle = handle 
     @chatflag = 0
+    @chatsock = sock 
  
   end
+  def getChatPart
 
-  def newChat(socket)
-    
-    
+    return @chatsock
 
   end
+  def setChatPart(chatsocket)
 
+    @chatsock = chatsocket
+
+  end
   def getHandle()
 
     return @handle
@@ -136,10 +151,16 @@ class Client
   end
 
   def setChatFlag()
+    
     @chatflag = 1
     
   end
-
+  
+  def getChatFlag()
+    
+    return @chatflag
+    
+  end
   
   def getSock()
 
@@ -153,7 +174,6 @@ class Client
   end
 
 end
-  
 
 def main
   
