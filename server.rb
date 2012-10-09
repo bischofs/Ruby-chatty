@@ -48,6 +48,7 @@ class ChatServer
         
         
         clientsock.puts("...Handle saved, Welcome to the server!")
+
         
 
         while line = clientsock.gets.chomp # get from the current client
@@ -56,9 +57,8 @@ class ChatServer
           if client.getChatFlag == 0
             
                       
-            if line == "$list"
+            if line == "-list"
               
-              printf("\n")
               
               @clientlist.each_with_index do |n,i| 
                 
@@ -69,10 +69,9 @@ class ChatServer
                 
               end #end each loop
                   
-            elsif line == "$quit"
+            elsif line == "-quit"
               
               clientsock.puts("Leaving the server...")
-
 
               @clientlist.each_with_index do |n,k|
                 
@@ -80,7 +79,6 @@ class ChatServer
                   
                   @clientlist.delete_at(k)
                   
-                  clientsock.puts("...cleared from list")
 
                 end
                 
@@ -88,7 +86,7 @@ class ChatServer
 
               break
               
-            elsif line == "$add"
+            elsif line == "-add"
               
               clientsock.puts("What is the name of the new group?")
               
@@ -97,37 +95,66 @@ class ChatServer
               @grouplist.push(Group.new(gname))
 
               clientsock.puts("Group #{gname} added")
-              
 
-            elsif line == "$groups"
+            elsif line == "-join"              
+
+              clientsock.puts("Which group would you like to join?")
               
-              @grouplist.each_with_index do |n,m| 
-              
-                temp = @grouplist[m]
-                
-                clientsock.puts temp.getName             
-                clientsock.puts temp.printClients            
-                
-              end
-              
-            else
+              gname = clientsock.gets.chomp 
               
               @grouplist.each_with_index do |n,p| #check for group name 
                 
                 group = @grouplist[p]
                 
-                if line = group.getName
+                if gname == group.getName
                   
-                  clientsock.puts("group name recognized, broadcasting")
-
-                  clientsock.puts("#{group.getName}:")
+                  group.add(client)
                   
-                  group.broadcast(line,client.getHandle)
+                  client.setGroup(gname)
 
+                  clientsock.puts("#{client.getHandle} joined group #{group.getName}")
+                  
                 end
-              
+             
               end
 
+            elsif line == "-msg"
+ 
+              if client.getGflag == 0
+                
+                  clientsock.puts("You are not in a group")
+
+              else
+                
+                @grouplist.each_with_index do |n,r| #check for group name 
+                  
+                  clientsock.printf("Group Broadcast: ")
+              
+                  line = clientsock.gets.chomp                   
+
+                  if client.getGroup == @grouplist[r].getName
+                    
+                    @grouplist[r].broadcast(line,client.getHandle)
+                    
+                  end
+
+                end
+                    
+              end
+
+            elsif line == "-groups"
+              
+              @grouplist.each_with_index do |n,m| 
+              
+                group = @grouplist[m]
+                
+                clientsock.puts  group.getName
+                group.printClients(clientsock)
+                
+              end
+              
+            else
+              
               @clientlist.each_with_index do |n,i| #check for client name
                 
                 temp = @clientlist[i]
@@ -140,11 +167,12 @@ class ChatServer
                   
                   client.setChatPart(temp.getSock)
                   temp.setChatPart(client.getSock)
-
+                  
                   temp.setChatFlag(1)
                   client.setChatFlag(1)
-
+                  
                 end
+                
               end #end each loop
               
               @clientlist.each_with_index do |n,j|
@@ -152,19 +180,18 @@ class ChatServer
                 @clientlist[j].getSock.puts("#{client.getHandle}: #{line}")
  
               end
-
+              
             end
             
             
           else#in chat session
             
-                        
-            if line == "$end"
+            
+            if line == "-end"
               
               client.setChatFlag(0)
               @clientlist[@x].setChatFlag(0)
               
-
             else
               chatsock = client.getChatPart
                           
@@ -181,8 +208,6 @@ class ChatServer
       
     end
 
-
-    
   end#run
   
   
@@ -199,7 +224,7 @@ class Group
      
   end
   
-  def add( client)
+  def add(client)
 
     @clist.push(client)
 
@@ -209,19 +234,23 @@ class Group
     return @name
     
   end
-  def printList
+  def printClients(csock)
 
     @clist.each_with_index do |n,o|
-      puts @clist[o].getHandle
+      
+      csock.puts @clist[o].getHandle 
+    
     end
 
   end
   def broadcast(line,handle)
     
     @clist.each_with_index do |n,q|
+      
       csock =  @clist[q].getSock
-      puts.csock("#{handle}: #{line}")
-                 
+     
+      csock.puts("#{handle}: #{line}")
+      
     end
     
   end
@@ -237,8 +266,8 @@ class Client
     @sock = sock 
     @handle = handle 
     @chatflag = 0
-    @groupflag = 0
     @chatsock = sock 
+    @gflag=0
  
   end
 
@@ -259,7 +288,6 @@ class Client
   end
 
 
-
   def setChatFlag(num)
     
     @chatflag = num
@@ -271,16 +299,23 @@ class Client
     return @chatflag
     
   end
+
  
-  def setGroupFlag(num)
-    
-    @groupflag = num
+  def setGroup(name)
+    @gflag = 1
+    @group = name
     
   end
   
-  def getGroupFlag()
+  def getGroup()
     
-    return @groupflag
+    return @group
+    
+  end
+
+  def getGflag()
+
+    return @gflag
     
   end
   
