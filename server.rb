@@ -3,6 +3,7 @@ require 'thread'
 
 class ChatServer
   
+
   def initialize(port)
   
     @clientlist = Array.new
@@ -11,6 +12,8 @@ class ChatServer
     @server.setsockopt( Socket::SOL_SOCKET, Socket::SO_REUSEADDR, 1)
     printf("Chatserver started on port %d\n", port)
     @desc.push(@server)
+    @x = 0
+
  
   end#init
   
@@ -22,14 +25,18 @@ class ChatServer
       Thread.start(@server.accept) do |clientsock| # create a new thread for each new server.accept where clientsock is the local thread socket variable
         
         clientsock.puts("Type $list to view the connected clients")
+        clientsock.puts("Type a handle for a private chat session")
+        clientsock.puts("Type #end to end a private chat session")
+        clientsock.puts("Default is broadcasting to all available clients")
         clientsock.puts("Type your Handle")
         
         handle = clientsock.gets.chomp 
         
         client = Client.new(handle,clientsock)
+
         @clientlist.push(client)
         
-        clientsock.puts("...Handle saved")
+        clientsock.puts("...Handle saved, Welcome to the server!")
         
 
         while line = clientsock.gets.chomp # get from the current client
@@ -53,7 +60,13 @@ class ChatServer
                   
             elsif line == "$quit"
               
+              clientsock.puts("Leaving the server...")
+
+              
+              
               break;
+
+
               
             else
               
@@ -62,28 +75,43 @@ class ChatServer
                 temp = @clientlist[i]
                 
                 if line == temp.getHandle 
+                  
+                  @x = i
 
                   clientsock.puts("Entered chat with #{temp.getHandle}")
                   
                   client.setChatPart(temp.getSock)
                   temp.setChatPart(client.getSock)
 
-                  temp.setChatFlag
-                  client.setChatFlag
+                  temp.setChatFlag(1)
+                  client.setChatFlag(1)
 
                 end
               end #end each loop
               
+              @clientlist.each_with_index do |n,j|
+
+                @clientlist[j].getSock.puts("#{client.getHandle}: #{line}")
+ 
+              end
+
             end
             
             
           else#in chat session
             
-            
-            chatsock = client.getChatPart
-            
-            chatsock.puts("#{client.getHandle}: #{line}")
-            
+            if line == "$end"
+              
+              client.setChatFlag(0)
+              @clientlist[@x].setChatFlag(0)
+              
+
+            else
+              chatsock = client.getChatPart
+                          
+              chatsock.puts("#{client.getHandle}: #{line}")
+            end
+          
           end
           
           #somewhere close the worker socket
@@ -94,6 +122,8 @@ class ChatServer
       end
       
     end
+
+
     
   end#run
   
@@ -143,9 +173,9 @@ class Client
 
   end
 
-  def setChatFlag()
+  def setChatFlag(num)
     
-    @chatflag = 1
+    @chatflag = num
     
   end
   
