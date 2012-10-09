@@ -1,3 +1,8 @@
+#TCP SERVER
+#Steve Bischoff
+#Candace Gordon
+#Jason Terpstra
+
 require 'socket'  # TCPServer
 require 'thread'
 
@@ -7,6 +12,8 @@ class ChatServer
   def initialize(port)
   
     @clientlist = Array.new
+    @grouplist = Array.new
+   
     @desc = Array.new
     @server = TCPServer.new( "", port )
     @server.setsockopt( Socket::SOL_SOCKET, Socket::SO_REUSEADDR, 1)
@@ -26,7 +33,10 @@ class ChatServer
         
         clientsock.puts("Type $list to view the connected clients")
         clientsock.puts("Type a handle for a private chat session")
-        clientsock.puts("Type #end to end a private chat session")
+        clientsock.puts("Type $end to end a private chat session")
+        clientsock.puts("Type $quit to leave the server")
+        clientsock.puts("Type $add to add a group, $groups to list")
+        clientsock.puts("Type a group name to join a group")
         clientsock.puts("Default is broadcasting to all available clients")
         clientsock.puts("Type your Handle")
         
@@ -35,6 +45,7 @@ class ChatServer
         client = Client.new(handle,clientsock)
 
         @clientlist.push(client)
+        
         
         clientsock.puts("...Handle saved, Welcome to the server!")
         
@@ -62,18 +73,65 @@ class ChatServer
               
               clientsock.puts("Leaving the server...")
 
-              
-              
-              break;
 
+              @clientlist.each_with_index do |n,k|
+                
+                if @clientlist[k].getHandle == client.getHandle
+                  
+                  @clientlist.delete_at(k)
+                  
+                  clientsock.puts("...cleared from list")
 
+                end
+                
+              end
+
+              break
+              
+            elsif line == "$add"
+              
+              clientsock.puts("What is the name of the new group?")
+              
+              gname = clientsock.gets.chomp 
+              
+              @grouplist.push(Group.new(gname))
+
+              clientsock.puts("Group #{gname} added")
+              
+
+            elsif line == "$groups"
+              
+              @grouplist.each_with_index do |n,m| 
+              
+                temp = @grouplist[m]
+                
+                clientsock.puts temp.getName             
+                clientsock.puts temp.printClients            
+                
+              end
               
             else
               
-              @clientlist.each_with_index do |n,i| 
+              @grouplist.each_with_index do |n,p| #check for group name 
+                
+                group = @grouplist[p]
+                
+                if line = group.getName
+                  
+                  clientsock.puts("group name recognized, broadcasting")
+
+                  clientsock.puts("#{group.getName}:")
+                  
+                  group.broadcast(line,client.getHandle)
+
+                end
+              
+              end
+
+              @clientlist.each_with_index do |n,i| #check for client name
                 
                 temp = @clientlist[i]
-                
+                    
                 if line == temp.getHandle 
                   
                   @x = i
@@ -100,6 +158,7 @@ class ChatServer
             
           else#in chat session
             
+                        
             if line == "$end"
               
               client.setChatFlag(0)
@@ -115,7 +174,6 @@ class ChatServer
           end
           
           #somewhere close the worker socket
-
           
         end
         
@@ -128,22 +186,48 @@ class ChatServer
   end#run
   
   
-  private
   
-  
-  def broadcast # broadcast to all clients
-    
-    #    @clientlist.each_with_index do |n,i| 
-    
-    
-    #   end
-    
-  end
   
 
 end# end server
 
+class Group
+  
+  def initialize(name)
+    @name = name
+    @clist = Array.new
+     
+  end
+  
+  def add( client)
 
+    @clist.push(client)
+
+  end
+  def getName
+    
+    return @name
+    
+  end
+  def printList
+
+    @clist.each_with_index do |n,o|
+      puts @clist[o].getHandle
+    end
+
+  end
+  def broadcast(line,handle)
+    
+    @clist.each_with_index do |n,q|
+      csock =  @clist[q].getSock
+      puts.csock("#{handle}: #{line}")
+                 
+    end
+    
+  end
+
+
+end
 
 
 class Client
@@ -153,6 +237,7 @@ class Client
     @sock = sock 
     @handle = handle 
     @chatflag = 0
+    @groupflag = 0
     @chatsock = sock 
  
   end
@@ -173,6 +258,8 @@ class Client
 
   end
 
+
+
   def setChatFlag(num)
     
     @chatflag = num
@@ -182,6 +269,18 @@ class Client
   def getChatFlag()
     
     return @chatflag
+    
+  end
+ 
+  def setGroupFlag(num)
+    
+    @groupflag = num
+    
+  end
+  
+  def getGroupFlag()
+    
+    return @groupflag
     
   end
   
