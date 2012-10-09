@@ -6,14 +6,21 @@ port = 1233
 
 s = TCPSocket.open(host, port)
 
-while line = s.gets   # Read lines from the socket
-  puts line.chop      # And print with platform line terminator
+
+Thread.start() do |clientsock|
   
-  Thread.start(s.accept) do |clientsock|
-    while line = gets
-      clientsock.puts("#{line}")
-    end
+  while read = s.gets   # Read lines from the socket
+    
+    puts read.chop      # And print with platform line terminator
+  
+    
   end
 
 end
+
+  
+while line = gets
+  s.puts("#{line}")
+end
+
 s.close      

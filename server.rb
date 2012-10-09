@@ -49,7 +49,6 @@ class ChatServer
         
         
         clientsock.puts("...Handle saved, Welcome to the server!")
-
         
 
         while line = clientsock.gets.chomp # get from the current client
