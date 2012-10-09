@@ -31,14 +31,15 @@ class ChatServer
 
       Thread.start(@server.accept) do |clientsock| # create a new thread for each new server.accept where clientsock is the local thread socket variable
         
-        clientsock.puts("Type $list to view the connected clients")
+        clientsock.puts("Type -list to view the connected clients")
         clientsock.puts("Type a handle for a private chat session")
-        clientsock.puts("Type $end to end a private chat session")
-        clientsock.puts("Type $quit to leave the server")
-        clientsock.puts("Type $add to add a group, $groups to list")
-        clientsock.puts("Type a group name to join a group")
+        clientsock.puts("Type -end to end a private chat session")
+        clientsock.puts("Type -quit to leave the server")
+        clientsock.puts("Type -add to add a group, -groups to list")
+        clientsock.puts("Type -join name to join a group")
+        clientsock.puts("Type -msg to message your group")
         clientsock.puts("Default is broadcasting to all available clients")
-        clientsock.puts("Type your Handle")
+        clientsock.puts("Enter a Handle to start")
         
         handle = clientsock.gets.chomp 
         
