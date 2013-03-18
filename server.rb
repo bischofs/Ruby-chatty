@@ -58,88 +58,52 @@ class ChatServer
             
                       
             if line == "-list"
-              
-              
-              @clientlist.each_with_index do |n,i| 
-                
-                temp =  @clientlist[i]
-                
-                clientsock.puts temp.getHandle 
+                @clientlist.each_with_index do |n,i| 
+                  temp =  @clientlist[i]
+                  clientsock.puts temp.getHandle 
                 clientsock.puts temp.getSockAddr
-                
-              end #end each loop
-                  
-            elsif line == "-quit"
-              
-              clientsock.puts("Leaving the server...")
+                end #end each loop
 
+              elsif line == "-quit"
+                clientsock.puts("Leaving the server...")
               @clientlist.each_with_index do |n,k|
-                
                 if @clientlist[k].getHandle == client.getHandle
-                  
                   @clientlist.delete_at(k)
-                  
-
                 end
-                
               end
 
               break
               
             elsif line == "-add"
-              
               clientsock.puts("What is the name of the new group?")
-              
               gname = clientsock.gets.chomp 
-              
               @grouplist.push(Group.new(gname))
-
               clientsock.puts("Group #{gname} added")
 
             elsif line == "-join"              
 
               clientsock.puts("Which group would you like to join?")
-              
               gname = clientsock.gets.chomp 
-              
               @grouplist.each_with_index do |n,p| #check for group name 
-                
                 group = @grouplist[p]
-                
                 if gname == group.getName
-                  
                   group.add(client)
-                  
                   client.setGroup(gname)
-
                   clientsock.puts("#{client.getHandle} joined group #{group.getName}")
-                  
                 end
-             
               end
 
             elsif line == "-msg"
- 
               if client.getGflag == 0
-                
                   clientsock.puts("You are not in a group")
-
               else
-                
                 @grouplist.each_with_index do |n,r| #check for group name 
-                  
                   clientsock.printf("Group Broadcast: ")
-              
                   line = clientsock.gets.chomp                   
-
                   if client.getGroup == @grouplist[r].getName
-                    
                     @grouplist[r].broadcast(line,client.getHandle)
-                    
                   end
-
                 end
-                    
               end
 
             elsif line == "-groups"
@@ -154,63 +118,36 @@ class ChatServer
               end
               
             else
-              
               @clientlist.each_with_index do |n,i| #check for client name
-                
                 temp = @clientlist[i]
-                    
                 if line == temp.getHandle 
-                  
                   @x = i
-
                   clientsock.puts("Entered chat with #{temp.getHandle}")
-                  
                   client.setChatPart(temp.getSock)
                   temp.setChatPart(client.getSock)
-                  
                   temp.setChatFlag(1)
                   client.setChatFlag(1)
-                  
                 end
                 
               end #end each loop
-              
               @clientlist.each_with_index do |n,j|
-
                 @clientlist[j].getSock.puts("#{client.getHandle}: #{line}")
- 
               end
-              
             end
-            
             
           else#in chat session
-            
-            
             if line == "-end"
-              
               client.setChatFlag(0)
               @clientlist[@x].setChatFlag(0)
-              
             else
               chatsock = client.getChatPart
-                          
               chatsock.puts("#{client.getHandle}: #{line}")
             end
-          
           end
-          
-          #somewhere close the worker socket
-          
         end
-        
       end
-      
     end
-
   end#run
-  
-  
   
   
 
