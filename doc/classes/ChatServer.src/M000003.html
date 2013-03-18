@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+<head>
+  <title>run (ChatServer)</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <link rel="stylesheet" href="../.././rdoc-style.css" type="text/css" media="screen" />
+</head>
+<body class="standalone-code">
+  <pre><span class="ruby-comment cmt"># File server.rb, line 28</span>
+  <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">run</span>  
+
+    <span class="ruby-keyword kw">while</span> <span class="ruby-keyword kw">true</span> <span class="ruby-comment cmt"># main run loop </span>
+
+      <span class="ruby-constant">Thread</span>.<span class="ruby-identifier">start</span>(<span class="ruby-ivar">@server</span>.<span class="ruby-identifier">accept</span>) <span class="ruby-keyword kw">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">clientsock</span><span class="ruby-operator">|</span> <span class="ruby-comment cmt"># create a new thread for each new server.accept where clientsock is the local thread socket variable</span>
+        
+        <span class="ruby-identifier">clientsock</span>.<span class="ruby-identifier">puts</span>(<span class="ruby-value str">&quot;Type -list to view the connected clients&quot;</span>)
+        <span class="ruby-identifier">clientsock</span>.<span class="ruby-identifier">puts</span>(<span class="ruby-value str">&quot;Type a handle for a private chat session&quot;</span>)
+        <span class="ruby-identifier">clientsock</span>.<span class="ruby-identifier">puts</span>(<span class="ruby-value str">&quot;Type -end to end a private chat session&quot;</span>)
+        <span class="ruby-identifier">clientsock</span>.<span class="ruby-identifier">puts</span>(<span class="ruby-value str">&quot;Type -quit to leave the server&quot;</span>)
+        <span class="ruby-identifier">clientsock</span>.<span class="ruby-identifier">puts</span>(<span class="ruby-value str">&quot;Type -add to add a group, -groups to list&quot;</span>)
+        <span class="ruby-identifier">clientsock</span>.<span class="ruby-identifier">puts</span>(<span class="ruby-value str">&quot;Type -join name to join a group&quot;</span>)
+        <span class="ruby-identifier">clientsock</span>.<span class="ruby-identifier">puts</span>(<span class="ruby-value str">&quot;Type -msg to message your group&quot;</span>)
+        <span class="ruby-identifier">clientsock</span>.<span class="ruby-identifier">puts</span>(<span class="ruby-value str">&quot;Default is broadcasting to all available clients&quot;</span>)
+        <span class="ruby-identifier">clientsock</span>.<span class="ruby-identifier">puts</span>(<span class="ruby-value str">&quot;Enter a Handle to start&quot;</span>)
+        
+        <span class="ruby-identifier">handle</span> = <span class="ruby-identifier">clientsock</span>.<span class="ruby-identifier">gets</span>.<span class="ruby-identifier">chomp</span> 
+        
+        <span class="ruby-identifier">client</span> = <span class="ruby-constant">Client</span>.<span class="ruby-identifier">new</span>(<span class="ruby-identifier">handle</span>,<span class="ruby-identifier">clientsock</span>)
+
+        <span class="ruby-ivar">@clientlist</span>.<span class="ruby-identifier">push</span>(<span class="ruby-identifier">client</span>)
+        
+        
+        <span class="ruby-identifier">clientsock</span>.<span class="ruby-identifier">puts</span>(<span class="ruby-value str">&quot;...Handle saved, Welcome to the server!&quot;</span>)
+        
+
+        <span class="ruby-keyword kw">while</span> <span class="ruby-identifier">line</span> = <span class="ruby-identifier">clientsock</span>.<span class="ruby-identifier">gets</span>.<span class="ruby-identifier">chomp</span> <span class="ruby-comment cmt"># get from the current client</span>
+        
+
+          <span class="ruby-keyword kw">if</span> <span class="ruby-identifier">client</span>.<span class="ruby-identifier">getChatFlag</span> <span class="ruby-operator">==</span> <span class="ruby-value">0</span>
+            
+                      
+            <span class="ruby-keyword kw">if</span> <span class="ruby-identifier">line</span> <span class="ruby-operator">==</span> <span class="ruby-value str">&quot;-list&quot;</span>
+                <span class="ruby-ivar">@clientlist</span>.<span class="ruby-identifier">each_with_index</span> <span class="ruby-keyword kw">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">n</span>,<span class="ruby-identifier">i</span><span class="ruby-operator">|</span> 
+                  <span class="ruby-identifier">temp</span> =  <span class="ruby-ivar">@clientlist</span>[<span class="ruby-identifier">i</span>]
+                  <span class="ruby-identifier">clientsock</span>.<span class="ruby-identifier">puts</span> <span class="ruby-identifier">temp</span>.<span class="ruby-identifier">getHandle</span> 
+                <span class="ruby-identifier">clientsock</span>.<span class="ruby-identifier">puts</span> <span class="ruby-identifier">temp</span>.<span class="ruby-identifier">getSockAddr</span>
+                <span class="ruby-keyword kw">end</span> <span class="ruby-comment cmt">#end each loop</span>
+
+              <span class="ruby-keyword kw">elsif</span> <span class="ruby-identifier">line</span> <span class="ruby-operator">==</span> <span class="ruby-value str">&quot;-quit&quot;</span>
+                <span class="ruby-identifier">clientsock</span>.<span class="ruby-identifier">puts</span>(<span class="ruby-value str">&quot;Leaving the server...&quot;</span>)
+              <span class="ruby-ivar">@clientlist</span>.<span class="ruby-identifier">each_with_index</span> <span class="ruby-keyword kw">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">n</span>,<span class="ruby-identifier">k</span><span class="ruby-operator">|</span>
+                <span class="ruby-keyword kw">if</span> <span class="ruby-ivar">@clientlist</span>[<span class="ruby-identifier">k</span>].<span class="ruby-identifier">getHandle</span> <span class="ruby-operator">==</span> <span class="ruby-identifier">client</span>.<span class="ruby-identifier">getHandle</span>
+                  <span class="ruby-ivar">@clientlist</span>.<span class="ruby-identifier">delete_at</span>(<span class="ruby-identifier">k</span>)
+                <span class="ruby-keyword kw">end</span>
+              <span class="ruby-keyword kw">end</span>
+
+              <span class="ruby-keyword kw">break</span>
+              
+            <span class="ruby-keyword kw">elsif</span> <span class="ruby-identifier">line</span> <span class="ruby-operator">==</span> <span class="ruby-value str">&quot;-add&quot;</span>
+              <span class="ruby-identifier">clientsock</span>.<span class="ruby-identifier">puts</span>(<span class="ruby-value str">&quot;What is the name of the new group?&quot;</span>)
+              <span class="ruby-identifier">gname</span> = <span class="ruby-identifier">clientsock</span>.<span class="ruby-identifier">gets</span>.<span class="ruby-identifier">chomp</span> 
+              <span class="ruby-ivar">@grouplist</span>.<span class="ruby-identifier">push</span>(<span class="ruby-constant">Group</span>.<span class="ruby-identifier">new</span>(<span class="ruby-identifier">gname</span>))
+              <span class="ruby-identifier">clientsock</span>.<span class="ruby-identifier">puts</span>(<span class="ruby-node">&quot;Group #{gname} added&quot;</span>)
+
+            <span class="ruby-keyword kw">elsif</span> <span class="ruby-identifier">line</span> <span class="ruby-operator">==</span> <span class="ruby-value str">&quot;-join&quot;</span>              
+
+              <span class="ruby-identifier">clientsock</span>.<span class="ruby-identifier">puts</span>(<span class="ruby-value str">&quot;Which group would you like to join?&quot;</span>)
+              <span class="ruby-identifier">gname</span> = <span class="ruby-identifier">clientsock</span>.<span class="ruby-identifier">gets</span>.<span class="ruby-identifier">chomp</span> 
+              <span class="ruby-ivar">@grouplist</span>.<span class="ruby-identifier">each_with_index</span> <span class="ruby-keyword kw">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">n</span>,<span class="ruby-identifier">p</span><span class="ruby-operator">|</span> <span class="ruby-comment cmt">#check for group name </span>
+                <span class="ruby-identifier">group</span> = <span class="ruby-ivar">@grouplist</span>[<span class="ruby-identifier">p</span>]
+                <span class="ruby-keyword kw">if</span> <span class="ruby-identifier">gname</span> <span class="ruby-operator">==</span> <span class="ruby-identifier">group</span>.<span class="ruby-identifier">getName</span>
+                  <span class="ruby-identifier">group</span>.<span class="ruby-identifier">add</span>(<span class="ruby-identifier">client</span>)
+                  <span class="ruby-identifier">client</span>.<span class="ruby-identifier">setGroup</span>(<span class="ruby-identifier">gname</span>)
+                  <span class="ruby-identifier">clientsock</span>.<span class="ruby-identifier">puts</span>(<span class="ruby-node">&quot;#{client.getHandle} joined group #{group.getName}&quot;</span>)
+                <span class="ruby-keyword kw">end</span>
+              <span class="ruby-keyword kw">end</span>
+
+            <span class="ruby-keyword kw">elsif</span> <span class="ruby-identifier">line</span> <span class="ruby-operator">==</span> <span class="ruby-value str">&quot;-msg&quot;</span>
+              <span class="ruby-keyword kw">if</span> <span class="ruby-identifier">client</span>.<span class="ruby-identifier">getGflag</span> <span class="ruby-operator">==</span> <span class="ruby-value">0</span>
+                  <span class="ruby-identifier">clientsock</span>.<span class="ruby-identifier">puts</span>(<span class="ruby-value str">&quot;You are not in a group&quot;</span>)
+              <span class="ruby-keyword kw">else</span>
+                <span class="ruby-ivar">@grouplist</span>.<span class="ruby-identifier">each_with_index</span> <span class="ruby-keyword kw">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">n</span>,<span class="ruby-identifier">r</span><span class="ruby-operator">|</span> <span class="ruby-comment cmt">#check for group name </span>
+                  <span class="ruby-identifier">clientsock</span>.<span class="ruby-identifier">printf</span>(<span class="ruby-value str">&quot;Group Broadcast: &quot;</span>)
+                  <span class="ruby-identifier">line</span> = <span class="ruby-identifier">clientsock</span>.<span class="ruby-identifier">gets</span>.<span class="ruby-identifier">chomp</span>                   
+                  <span class="ruby-keyword kw">if</span> <span class="ruby-identifier">client</span>.<span class="ruby-identifier">getGroup</span> <span class="ruby-operator">==</span> <span class="ruby-ivar">@grouplist</span>[<span class="ruby-identifier">r</span>].<span class="ruby-identifier">getName</span>
+                    <span class="ruby-ivar">@grouplist</span>[<span class="ruby-identifier">r</span>].<span class="ruby-identifier">broadcast</span>(<span class="ruby-identifier">line</span>,<span class="ruby-identifier">client</span>.<span class="ruby-identifier">getHandle</span>)
+                  <span class="ruby-keyword kw">end</span>
+                <span class="ruby-keyword kw">end</span>
+              <span class="ruby-keyword kw">end</span>
+
+            <span class="ruby-keyword kw">elsif</span> <span class="ruby-identifier">line</span> <span class="ruby-operator">==</span> <span class="ruby-value str">&quot;-groups&quot;</span>
+              
+              <span class="ruby-ivar">@grouplist</span>.<span class="ruby-identifier">each_with_index</span> <span class="ruby-keyword kw">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">n</span>,<span class="ruby-identifier">m</span><span class="ruby-operator">|</span> 
+              
+                <span class="ruby-identifier">group</span> = <span class="ruby-ivar">@grouplist</span>[<span class="ruby-identifier">m</span>]
+                
+                <span class="ruby-identifier">clientsock</span>.<span class="ruby-identifier">puts</span>  <span class="ruby-identifier">group</span>.<span class="ruby-identifier">getName</span>
+                <span class="ruby-identifier">group</span>.<span class="ruby-identifier">printClients</span>(<span class="ruby-identifier">clientsock</span>)
+                
+              <span class="ruby-keyword kw">end</span>
+              
+            <span class="ruby-keyword kw">else</span>
+              <span class="ruby-ivar">@clientlist</span>.<span class="ruby-identifier">each_with_index</span> <span class="ruby-keyword kw">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">n</span>,<span class="ruby-identifier">i</span><span class="ruby-operator">|</span> <span class="ruby-comment cmt">#check for client name</span>
+                <span class="ruby-identifier">temp</span> = <span class="ruby-ivar">@clientlist</span>[<span class="ruby-identifier">i</span>]
+                <span class="ruby-keyword kw">if</span> <span class="ruby-identifier">line</span> <span class="ruby-operator">==</span> <span class="ruby-identifier">temp</span>.<span class="ruby-identifier">getHandle</span> 
+                  <span class="ruby-ivar">@x</span> = <span class="ruby-identifier">i</span>
+                  <span class="ruby-identifier">clientsock</span>.<span class="ruby-identifier">puts</span>(<span class="ruby-node">&quot;Entered chat with #{temp.getHandle}&quot;</span>)
+                  <span class="ruby-identifier">client</span>.<span class="ruby-identifier">setChatPart</span>(<span class="ruby-identifier">temp</span>.<span class="ruby-identifier">getSock</span>)
+                  <span class="ruby-identifier">temp</span>.<span class="ruby-identifier">setChatPart</span>(<span class="ruby-identifier">client</span>.<span class="ruby-identifier">getSock</span>)
+                  <span class="ruby-identifier">temp</span>.<span class="ruby-identifier">setChatFlag</span>(<span class="ruby-value">1</span>)
+                  <span class="ruby-identifier">client</span>.<span class="ruby-identifier">setChatFlag</span>(<span class="ruby-value">1</span>)
+                <span class="ruby-keyword kw">end</span>
+                
+              <span class="ruby-keyword kw">end</span> <span class="ruby-comment cmt">#end each loop</span>
+              <span class="ruby-ivar">@clientlist</span>.<span class="ruby-identifier">each_with_index</span> <span class="ruby-keyword kw">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">n</span>,<span class="ruby-identifier">j</span><span class="ruby-operator">|</span>
+                <span class="ruby-ivar">@clientlist</span>[<span class="ruby-identifier">j</span>].<span class="ruby-identifier">getSock</span>.<span class="ruby-identifier">puts</span>(<span class="ruby-node">&quot;#{client.getHandle}: #{line}&quot;</span>)
+              <span class="ruby-keyword kw">end</span>
+            <span class="ruby-keyword kw">end</span>
+            
+          <span class="ruby-keyword kw">else</span><span class="ruby-comment cmt">#in chat session</span>
+            <span class="ruby-keyword kw">if</span> <span class="ruby-identifier">line</span> <span class="ruby-operator">==</span> <span class="ruby-value str">&quot;-end&quot;</span>
+              <span class="ruby-identifier">client</span>.<span class="ruby-identifier">setChatFlag</span>(<span class="ruby-value">0</span>)
+              <span class="ruby-ivar">@clientlist</span>[<span class="ruby-ivar">@x</span>].<span class="ruby-identifier">setChatFlag</span>(<span class="ruby-value">0</span>)
+            <span class="ruby-keyword kw">else</span>
+              <span class="ruby-identifier">chatsock</span> = <span class="ruby-identifier">client</span>.<span class="ruby-identifier">getChatPart</span>
+              <span class="ruby-identifier">chatsock</span>.<span class="ruby-identifier">puts</span>(<span class="ruby-node">&quot;#{client.getHandle}: #{line}&quot;</span>)
+            <span class="ruby-keyword kw">end</span>
+          <span class="ruby-keyword kw">end</span>
+        <span class="ruby-keyword kw">end</span>
+      <span class="ruby-keyword kw">end</span>
+    <span class="ruby-keyword kw">end</span>
+  <span class="ruby-keyword kw">end</span><span class="ruby-comment cmt">#run</span></pre>
+</body>
+</html>
